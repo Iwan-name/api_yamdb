@@ -95,7 +95,7 @@ USE_L10N = True
 
 USE_TZ = True
 
-
+# кто-то внёс изменения
 # Static files (CSS, JavaScript, Images)
 
 STATIC_URL = '/static/'
