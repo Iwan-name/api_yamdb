@@ -84,6 +84,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
+# feature
 
 LANGUAGE_CODE = 'en-us'
 
