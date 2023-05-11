@@ -24,6 +24,9 @@ INSTALLED_APPS = [
     'djoser',
     'api',
     'reviews',
+    'rest_framework',
+    'api.apps.ApiConfig',
+    'reviews.apps.ReviewsConfig',
 ]
 
 MIDDLEWARE = [
