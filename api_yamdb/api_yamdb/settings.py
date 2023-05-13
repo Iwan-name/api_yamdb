@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 
 
@@ -21,9 +22,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'djoser',
-    'api',
-    'reviews',
     'rest_framework',
     'api.apps.ApiConfig',
     'reviews.apps.ReviewsConfig',
