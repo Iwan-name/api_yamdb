@@ -52,7 +52,7 @@ class GenreViewSet(mixins.CreateModelMixin,
 
 class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет для модели Title."""
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().order_by('name')
     serializer_class = TitleFilter
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
