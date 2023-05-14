@@ -13,5 +13,10 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     pagination_class = PageNumberPagination
+    lookup_field = 'username'
 
+    def get_object(self):
+        queryset = self.get_queryset()
+        obj = get_object_or_404(queryset, username=self.kwargs['username'])
+        return obj
 
