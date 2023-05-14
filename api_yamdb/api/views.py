@@ -1,5 +1,6 @@
 from rest_framework import filters, mixins, viewsets
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.pagination import PageNumberPagination
 from reviews.filter import TitleFilter
 from reviews.models import Category, Genre, Title
 from .serializers import (CategorySerializer,
@@ -14,6 +15,7 @@ class CategoryViewSet(mixins.CreateModelMixin,
                       viewsets.GenericViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    pagination_class = PageNumberPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -25,6 +27,7 @@ class GenreViewSet(mixins.CreateModelMixin,
                    viewsets.GenericViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    pagination_class = PageNumberPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -34,6 +37,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет для модели Title."""
     queryset = Title.objects.all().order_by('name')
     serializer_class = TitleFilter
+    pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 

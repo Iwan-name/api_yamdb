@@ -3,27 +3,21 @@ from django.contrib import admin
 from .models import Category, Genre, Title
 
 
+@admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'slug')
     empty_value_display = '-пусто'
 
 
+@admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'slug')
     empty_value_display = '-пусто'
 
 
+@admin.register(Title)
 class TitleAdmin(admin.ModelAdmin):
-    list_display = ('id',
-                    'name',
-                    'year',
-                    'rating',
-                    'description',
-                    'genre',
-                    'category')
-    empty_value_display = '-пусто'
-
-
-admin.site.register(Category, CategoryAdmin)
-admin.site.register(Title, TitleAdmin)
-admin.site.register(Genre, GenreAdmin)
+    list_display = ('id', 'name', 'year', 'description', 'category')
+    search_fields = ('name', 'description')
+    list_filter = ('genre', 'year')
+    empty_value_display = '-пусто-'
