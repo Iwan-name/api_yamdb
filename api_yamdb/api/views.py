@@ -1,11 +1,31 @@
-from rest_framework import filters, mixins, viewsets
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, mixins
+from rest_framework import viewsets
+from rest_framework.pagination import PageNumberPagination
+
+from api.serializers import UserSerializer
 from reviews.filter import TitleFilter
 from reviews.models import Category, Genre, Title
+from users.models import User
+from users.permissions import IsAdminOrReadOnly
 from .serializers import (CategorySerializer,
                           GenreSerializer,
                           TitlesGetSerializer,
                           TitlesPostSerializer)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    pagination_class = PageNumberPagination
+    permission_classes = [IsAdminOrReadOnly]
+    lookup_field = 'username'
+
+    def get_object(self):
+        queryset = self.get_queryset()
+        obj = get_object_or_404(queryset, username=self.kwargs['username'])
+        return obj
 
 
 class CategoryViewSet(mixins.CreateModelMixin,
@@ -28,27 +48,6 @@ class GenreViewSet(mixins.CreateModelMixin,
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
-from django.shortcuts import render, get_object_or_404
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from rest_framework import filters
-from rest_framework import viewsets
-from rest_framework.pagination import PageNumberPagination
-
-from api.serializers import UserSerializer
-from users.models import User
-
-
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    pagination_class = PageNumberPagination
-    lookup_field = 'username'
-
-    def get_object(self):
-        queryset = self.get_queryset()
-        obj = get_object_or_404(queryset, username=self.kwargs['username'])
-        return obj
 
 
 class TitleViewSet(viewsets.ModelViewSet):

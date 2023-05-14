@@ -3,15 +3,10 @@ from django.db import models
 
 
 class User(AbstractUser):
-    ADMIN = 1
-    MODERATOR = 2
-    USER = 3
+    ADMIN = 'admin'
+    MODERATOR = 'moderator'
+    USER = 'user'
 
-    ROLE_CHOICES = (
-        (ADMIN, 'admin'),
-        (MODERATOR, 'moderator'),
-        (USER, 'user'),
-    )
     username = models.CharField(
         'username',
         max_length=150,
@@ -36,8 +31,8 @@ class User(AbstractUser):
         blank=True
 
     )
-    role = models.PositiveSmallIntegerField(
-        choices=ROLE_CHOICES,
-        blank=True,
-        null=True
+    role = models.CharField(
+        'Роль',
+        max_length=20,
+        blank=True
     )
