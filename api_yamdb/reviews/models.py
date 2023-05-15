@@ -4,14 +4,13 @@ from django.db import models
 
 User = get_user_model()
 
-class Titles(models.Model):
+class Title(models.Model):
     pass
 
 
-class Reviews(models.Model):
-    """id,title_id,text,author,score,pub_date"""
+class Review(models.Model):
     title_id = models.ForeignKey(
-        Titles,
+        Title,
         on_delete=models.CASCADE,
         related_name='reviews'
     )
@@ -21,17 +20,19 @@ class Reviews(models.Model):
         on_delete=models.CASCADE,
         related_name='reviews'
     )
-    score = models.DecimalField()
+    score = models.DecimalField(
+        max_digits=5,
+        decimal_places=2
+    )
     pub_date = models.DateTimeField(
         'Дата публикации',
         auto_now_add=True
     )
 
 
-class Comments(models.Model):
-    """id,review_id,text,author,pub_date"""
+class Comment(models.Model):
     review_id = models.ForeignKey(
-        Reviews,
+        Review,
         on_delete=models.CASCADE,
         related_name='comments'
     )
