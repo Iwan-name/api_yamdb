@@ -1,5 +1,4 @@
-from django.contrib.auth.tokens import default_token_generator
-from django.shortcuts import get_object_or_404
+from rest_framework import filters, mixins, viewsets
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
 from rest_framework import filters, mixins, status
@@ -39,8 +38,8 @@ class CategoryViewSet(mixins.CreateModelMixin,
                       viewsets.GenericViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    pagination_class = PageNumberPagination
     filter_backends = (filters.SearchFilter,)
-    pagination_class = LimitOffsetPagination
     search_fields = ('name',)
     lookup_field = 'slug'
 
@@ -62,9 +61,9 @@ class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет для модели Title."""
     queryset = Title.objects.all().order_by('name')
     serializer_class = TitleFilter
+    pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
-    pagination_class = PageNumberPagination
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
