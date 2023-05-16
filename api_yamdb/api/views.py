@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -31,7 +33,27 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     pagination_class = PageNumberPagination
     permission_classes = [IsAdmin]
+    search_fields = ('username',)
     lookup_field = 'username'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search_query = self.request.query_params.get('username', None)
+        if search_query:
+            queryset = queryset.filter(name__icontains=search_query)
+        return queryset
+
+    # allowed_methods = ['get', 'post', 'delete', 'patch']
+    # def get_object(self):
+    #     queryset = self.get_queryset()
+    #     obj = get_object_or_404(queryset, username=self.kwargs['username'])
+    #     return obj
+
+    def update(self, request, *args, **kwargs):
+        if request.method == 'PUT':
+            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        else:
+            return super().update(request, *args, **kwargs)
 
     @action(methods=['GET', 'PATCH'], detail=False,
             permission_classes=[IsAuthenticated])
@@ -45,11 +67,6 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.save(role=user.role)
             print(serializer.data)
         return Response(serializer.data)
-
-    def get_object(self):
-        queryset = self.get_queryset()
-        obj = get_object_or_404(queryset, username=self.kwargs['username'])
-        return obj
 
 
 class CategoryViewSet(mixins.CreateModelMixin,
@@ -101,7 +118,6 @@ class UserCreateViewSet(mixins.CreateModelMixin,
     serializer_class = UserCreateSerializer
     permission_classes = (AllowAny,)
 
-
     def create(self, request, *args, **kwargs):
         """Создает объект класса User и
         отправляет на почту пользователя код подтверждения."""
@@ -148,4 +164,3 @@ class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [IsModeratorOrReadOnly]
-

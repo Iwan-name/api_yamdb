@@ -136,3 +136,4 @@ EMAIL_HOST_USER = "anti_tm@bk.ru"
 EMAIL_HOST_PASSWORD = "EKp1BLfq3vJ8qGgiQuGz"
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
+
