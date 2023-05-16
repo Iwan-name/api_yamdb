@@ -21,5 +21,6 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 class TitleViewSetViewSet(viewsets.ModelViewSet):
+    # queryset = Title.objects.select_related('reviews').annotate(AVG('score'))
     queryset = Title.objects.all()
     serializer_class = TitleSerializer
