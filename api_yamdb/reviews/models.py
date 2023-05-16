@@ -1,7 +1,10 @@
 from django.db import models
 from django.core.validators import MaxValueValidator
 from django.utils import timezone
+from django.contrib.auth import get_user_model
+from django.db import models
 
+User = get_user_model()
 
 class Category(models.Model):
     name = models.CharField('Наименование', max_length=256)
@@ -101,3 +104,45 @@ class Genre_title(models.Model):
 
     def __str__(self):
         return f'{self.title} - {self.genre}'
+
+
+
+
+class Review(models.Model):
+    title_id = models.ForeignKey(
+        Title,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    text = models.TextField()
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='reviews'
+    )
+    score = models.DecimalField(
+        max_digits=5,
+        decimal_places=2
+    )
+    pub_date = models.DateTimeField(
+        'Дата публикации',
+        auto_now_add=True
+    )
+
+
+class Comment(models.Model):
+    review_id = models.ForeignKey(
+        Review,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    text = models.TextField()
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='comments'
+    )
+    pub_date = models.DateTimeField(
+        'Дата публикации',
+        auto_now_add=True
+    )

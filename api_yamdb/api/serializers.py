@@ -108,3 +108,15 @@ class UserRecieveTokenSerializer(serializers.Serializer):
         max_length=150,
         required=True
     )
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    pass
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    pass
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    pass

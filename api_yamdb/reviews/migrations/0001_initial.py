@@ -54,6 +54,28 @@ class Migration(migrations.Migration):
             name='Title',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Review',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('text', models.TextField()),
+                ('score', models.DecimalField(decimal_places=2, max_digits=5)),
+                ('pub_date', models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')),
+                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reviews', to=settings.AUTH_USER_MODEL)),
+                ('title_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reviews', to='reviews.title')),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Comment',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('text', models.TextField()),
+                ('pub_date', models.DateTimeField(auto_now_add=True, verbose_name='Дата публикации')),
+                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comments', to=settings.AUTH_USER_MODEL)),
+                ('review_id', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comments', to='reviews.review')),
+            ],
                 ('name', models.CharField(max_length=200, verbose_name='Наименование')),
                 ('year', models.PositiveSmallIntegerField(validators=[django.core.validators.MaxValueValidator(2023)], verbose_name='Год выпуска')),
                 ('rating', models.IntegerField(default=None, null=True)),

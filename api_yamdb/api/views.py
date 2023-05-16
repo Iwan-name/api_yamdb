@@ -1,24 +1,28 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
-from rest_framework import filters, mixins, viewsets
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import mixins, status
+from rest_framework import viewsets, filters
 from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework import filters, mixins, status
-from rest_framework import viewsets
-from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
 from api.serializers import UserSerializer, UserCreateSerializer, UserRecieveTokenSerializer
 from reviews.filter import TitleFilter
 from reviews.models import Category, Genre, Title
+from reviews.models import Review, Comment
 from users.models import User
 from users.permissions import IsAdminOrReadOnly
 from .serializers import (CategorySerializer,
                           GenreSerializer,
                           TitlesGetSerializer,
                           TitlesPostSerializer)
+from .serializers import (
+    ReviewSerializer,
+    CommentSerializer
+)
 from .utils import send_confirmation_code
 
 
@@ -109,10 +113,8 @@ class UserCreateViewSet(mixins.CreateModelMixin,
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-
 class UserReceiveTokenViewSet(mixins.CreateModelMixin,
                               viewsets.GenericViewSet):
-
     queryset = User.objects.all()
     serializer_class = UserRecieveTokenSerializer
     permission_classes = (AllowAny,)
@@ -129,3 +131,17 @@ class UserReceiveTokenViewSet(mixins.CreateModelMixin,
             return Response(message, status=status.HTTP_400_BAD_REQUEST)
         message = {'token': str(AccessToken.for_user(user))}
         return Response(message, status=status.HTTP_200_OK)
+
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+
+
+class TitleViewSetViewSet(viewsets.ModelViewSet):
+    pass
