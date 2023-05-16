@@ -71,29 +71,35 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания объекта класса User."""
+    # username = serializers.CharField(required=True, max_length=150)
+    # email = serializers.EmailField(required=True, max_length=254)
+
+    def validate(self, data):
+        """Запрещает пользователям присваивать себе имя me
+        и использовать повторные username и email."""
+        username = data['username']
+        email = data['email']
+        if username == 'me':
+            raise serializers.ValidationError(
+                'Использовать имя me запрещено'
+            )
+        if User.objects.filter(username=username, email=email).exists():
+            return data
+        if User.objects.filter(username=username).exists():
+            raise serializers.ValidationError(
+                'Пользователь с таким username уже существует'
+            )
+        if User.objects.filter(email=email).exists():
+            raise serializers.ValidationError(
+                'Пользователь с таким email уже существует'
+            )
+        return data
 
     class Meta:
         model = User
         fields = (
             'username', 'email'
         )
-
-    def validate(self, data):
-        """Запрещает пользователям присваивать себе имя me
-        и использовать повторные username и email."""
-        if data.get('username') == 'me':
-            raise serializers.ValidationError(
-                'Использовать имя me запрещено'
-            )
-        if User.objects.filter(username=data.get('username')):
-            raise serializers.ValidationError(
-                'Пользователь с таким username уже существует'
-            )
-        if User.objects.filter(email=data.get('email')):
-            raise serializers.ValidationError(
-                'Пользователь с таким email уже существует'
-            )
-        return data
 
 
 class UserRecieveTokenSerializer(serializers.Serializer):
@@ -117,6 +123,3 @@ class ReviewSerializer(serializers.ModelSerializer):
 class CommentSerializer(serializers.ModelSerializer):
     pass
 
-
-class TitleSerializer(serializers.ModelSerializer):
-    pass

@@ -1,10 +1,12 @@
-from django.db import models
 from django.core.validators import MaxValueValidator
-from django.utils import timezone
-from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils import timezone
 
-User = get_user_model()
+from users.models import User
+
+
+# User = get_user_model()
+
 
 class Category(models.Model):
     name = models.CharField('Наименование', max_length=256)
@@ -104,8 +106,6 @@ class Genre_title(models.Model):
 
     def __str__(self):
         return f'{self.title} - {self.genre}'
-
-
 
 
 class Review(models.Model):

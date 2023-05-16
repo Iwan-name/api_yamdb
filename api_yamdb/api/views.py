@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, status
 from rest_framework import viewsets, filters
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -14,7 +14,7 @@ from reviews.filter import TitleFilter
 from reviews.models import Category, Genre, Title
 from reviews.models import Review, Comment
 from users.models import User
-from users.permissions import IsAdminOrReadOnly
+from users.permissions import IsAdminOrReadOnly, IsModeratorOrReadOnly, IsUserOrReadOnly, IsAdmin
 from .serializers import (CategorySerializer,
                           GenreSerializer,
                           TitlesGetSerializer,
@@ -30,7 +30,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     pagination_class = PageNumberPagination
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdmin]
     lookup_field = 'username'
 
     @action(methods=['GET', 'PATCH'], detail=False,
@@ -40,9 +40,9 @@ class UserViewSet(viewsets.ModelViewSet):
         user = self.request.user
         serializer = self.get_serializer(user)
         if self.request.method == 'PATCH':
-            serializer = self.get_serializer(user, data=request.data)
+            serializer = self.get_serializer(user, data=request.data, partial=True)
             serializer.is_valid(raise_exception=True)
-            serializer.save()
+            serializer.save(role=user.role)
             print(serializer.data)
         return Response(serializer.data)
 
@@ -59,6 +59,7 @@ class CategoryViewSet(mixins.CreateModelMixin,
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     pagination_class = PageNumberPagination
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -82,6 +83,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().order_by('name')
     serializer_class = TitleFilter
     pagination_class = PageNumberPagination
+    permission_classes = [IsAdminOrReadOnly]
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 
@@ -99,18 +101,21 @@ class UserCreateViewSet(mixins.CreateModelMixin,
     serializer_class = UserCreateSerializer
     permission_classes = (AllowAny,)
 
+
     def create(self, request, *args, **kwargs):
         """Создает объект класса User и
         отправляет на почту пользователя код подтверждения."""
         serializer = UserCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user, _ = User.objects.get_or_create(**serializer.validated_data)
+        username = serializer.validated_data.get('username')
+        email = serializer.validated_data.get('email')
+        user, _ = User.objects.get_or_create(username=username, email=email)
         confirmation_code = default_token_generator.make_token(user)
         send_confirmation_code(
             email=user.email,
             confirmation_code=confirmation_code
         )
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data)  # , status=status.HTTP_200_OK)
 
 
 class UserReceiveTokenViewSet(mixins.CreateModelMixin,
@@ -136,12 +141,10 @@ class UserReceiveTokenViewSet(mixins.CreateModelMixin,
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    permission_classes = [IsModeratorOrReadOnly]
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-
-
-class TitleViewSetViewSet(viewsets.ModelViewSet):
-    pass
+    permission_classes = [IsModeratorOrReadOnly]
