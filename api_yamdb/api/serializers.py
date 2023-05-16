@@ -6,11 +6,25 @@ from reviews.models import Review, Comment, Title
 
 
 class ReviewSerializer(serializers.ModelSerializer):
-    pass
+    author = SlugRelatedField(
+        slug_field='username',
+        read_only=True
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = Review
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    pass
+    author = SlugRelatedField(
+        slug_field='username',
+        read_only=True
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = Review
 
 
 class TitleSerializer(serializers.ModelSerializer):

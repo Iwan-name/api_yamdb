@@ -21,4 +21,5 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 class TitleViewSetViewSet(viewsets.ModelViewSet):
-    pass
+    queryset = Title.objects.all()
+    serializer_class = TitleSerializer
