@@ -17,12 +17,17 @@ class GenreAdmin(admin.ModelAdmin):
 
 @admin.register(Title)
 class TitleAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'year', 'description', 'category')
-    search_fields = ('name', 'description')
-    list_filter = ('genre', 'year')
+    list_display = (
+        'pk',
+        'name',
+        'year',
+        'category',
+        'description'
+    )
+    list_editable = ('name', 'year', 'description')
+    search_fields = ('name', 'year', 'category', 'genre')
+    list_filter = ('name', 'year', 'category', 'genre')
     empty_value_display = '-пусто-'
 
 
-admin.site.register(Category, CategoryAdmin)
-admin.site.register(Title, TitleAdmin)
-admin.site.register(Genre, GenreAdmin)
+# admin.site.register(Category, CategoryAdmin)

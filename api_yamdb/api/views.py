@@ -1,10 +1,13 @@
+from django.contrib.auth.tokens import default_token_generator
+from django.shortcuts import get_object_or_404
 from rest_framework import filters, mixins, viewsets
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import filters, mixins, status
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination, LimitOffsetPagination
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import AccessToken
 
 from api.serializers import UserSerializer, UserCreateSerializer, UserRecieveTokenSerializer
@@ -25,6 +28,19 @@ class UserViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
     permission_classes = [IsAdminOrReadOnly]
     lookup_field = 'username'
+
+    @action(methods=['GET', 'PATCH'], detail=False,
+            permission_classes=[IsAuthenticated])
+    def me(self, request):
+        print(self.request.user.role)
+        user = self.request.user
+        serializer = self.get_serializer(user)
+        if self.request.method == 'PATCH':
+            serializer = self.get_serializer(user, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            print(serializer.data)
+        return Response(serializer.data)
 
     def get_object(self):
         queryset = self.get_queryset()
@@ -95,14 +111,12 @@ class UserCreateViewSet(mixins.CreateModelMixin,
 
 class UserReceiveTokenViewSet(mixins.CreateModelMixin,
                               viewsets.GenericViewSet):
-    """Вьюсет для получения пользователем JWT токена."""
 
     queryset = User.objects.all()
     serializer_class = UserRecieveTokenSerializer
     permission_classes = (AllowAny,)
 
     def create(self, request, *args, **kwargs):
-        """Предоставляет пользователю JWT токен по коду подтверждения."""
         serializer = UserRecieveTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         username = serializer.validated_data.get('username')
