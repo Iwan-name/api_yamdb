@@ -3,41 +3,23 @@ from django.db import models
 
 
 class User(AbstractUser):
-    ADMIN = 1
-    MODERATOR = 2
-    USER = 3
-
-    ROLE_CHOICES = (
-        (ADMIN, 'admin'),
-        (MODERATOR, 'moderator'),
-        (USER, 'user'),
-    )
-    username = models.CharField(
-        'username',
-        max_length=150,
-        unique=True,
-    )
-    first_name = models.CharField(
-        'first name',
-        max_length=150,
-        blank=True
-    )
-    last_name = models.CharField(
-        'last name',
-        max_length=150,
-        blank=True
-    )
-    email = models.EmailField(
-        'email address',
-        blank=True
-    )
+    ADMIN = 'admin'
+    MODERATOR = 'moderator'
+    USER = 'user'
+    email = models.EmailField('email address')
     bio = models.TextField(
         'Биография',
         blank=True
 
     )
-    role = models.PositiveSmallIntegerField(
-        choices=ROLE_CHOICES,
+    role = models.TextField(
         blank=True,
-        null=True
+        verbose_name='Роль',
+        default='user'
     )
+
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+        ordering = ('id',)
+
