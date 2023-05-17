@@ -14,7 +14,7 @@ from reviews.filter import TitleFilter
 from reviews.models import Category, Genre, Title
 from reviews.models import Review, Comment
 from users.models import User
-from users.permissions import IsAdminOrReadOnly, IsAdmin
+from users.permissions import IsAdminOrReadOnly, IsAdmin, IsAuthorOrModerOrAdmin
 from .serializers import (CategorySerializer,
                           GenreSerializer,
                           TitlesGetSerializer,
@@ -158,10 +158,10 @@ class UserReceiveTokenViewSet(mixins.CreateModelMixin,
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    # permission_classes = [IsModeratorOrReadOnly]
+    permission_classes = [IsAuthorOrModerOrAdmin]
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    # permission_classes = [IsModeratorOrReadOnly]
+    permission_classes = [IsAuthorOrModerOrAdmin]

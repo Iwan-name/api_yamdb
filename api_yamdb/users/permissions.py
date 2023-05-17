@@ -25,3 +25,14 @@ class IsUserOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return request.user.is_authenticated and request.user.role == 'user'
+
+
+class IsAuthorOrModerOrAdmin(permissions.BasePermission):
+    """Permission for Review and Comment"""
+
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        if request.user.is_authenticated:
+            return True
+        return False
