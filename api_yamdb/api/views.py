@@ -33,6 +33,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     pagination_class = PageNumberPagination
     permission_classes = [IsAdmin]
+    filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
     lookup_field = 'username'
 
@@ -42,12 +43,6 @@ class UserViewSet(viewsets.ModelViewSet):
         if search_query:
             queryset = queryset.filter(name__icontains=search_query)
         return queryset
-
-    # allowed_methods = ['get', 'post', 'delete', 'patch']
-    # def get_object(self):
-    #     queryset = self.get_queryset()
-    #     obj = get_object_or_404(queryset, username=self.kwargs['username'])
-    #     return obj
 
     def update(self, request, *args, **kwargs):
         if request.method == 'PUT':
@@ -131,7 +126,8 @@ class UserCreateViewSet(mixins.CreateModelMixin,
             email=user.email,
             confirmation_code=confirmation_code
         )
-        return Response(serializer.data)  # , status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 class UserReceiveTokenViewSet(mixins.CreateModelMixin,
@@ -157,10 +153,10 @@ class UserReceiveTokenViewSet(mixins.CreateModelMixin,
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    permission_classes = [IsModeratorOrReadOnly]
+    #permission_classes = [IsModeratorOrReadOnly]
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    permission_classes = [IsModeratorOrReadOnly]
+    #permission_classes = [IsModeratorOrReadOnly]
