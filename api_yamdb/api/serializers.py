@@ -64,10 +64,6 @@ class TitlesPostSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    # email = serializers.EmailField(max_length=254, allow_blank=False,
-    #                                )
-    # username = serializers.CharField(max_length=150, allow_blank=False,
-    #                                  )
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'email', 'bio', 'role']
@@ -75,9 +71,6 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания объекта класса User."""
-    # username = serializers.CharField(required=True, max_length=150)
-    # email = serializers.EmailField(required=True, max_length=254)
-
     def validate(self, data):
         """Запрещает пользователям присваивать себе имя me
         и использовать повторные username и email."""
