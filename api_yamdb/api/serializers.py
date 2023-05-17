@@ -64,6 +64,15 @@ class TitlesPostSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    def validate(self, data):
+        if 'email' in data:
+            email = data['email']
+            if User.objects.filter(email=email).exists():
+                raise serializers.ValidationError(
+                    'Пользователь с таким email уже существует'
+                )
+        return data
+
     class Meta:
         model = User
         fields = ['username', 'first_name', 'last_name', 'email', 'bio', 'role']
@@ -71,6 +80,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
     """Сериализатор для создания объекта класса User."""
+
     def validate(self, data):
         """Запрещает пользователям присваивать себе имя me
         и использовать повторные username и email."""
@@ -83,9 +93,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
         if User.objects.filter(username=username, email=email).exists():
             return data
         if User.objects.filter(username=username).exists():
-            raise serializers.ValidationError(
-                'Пользователь с таким username уже существует'
-            )
+            return 'Пользователь с таким username уже существует'
         if User.objects.filter(email=email).exists():
             raise serializers.ValidationError(
                 'Пользователь с таким email уже существует'
@@ -133,4 +141,3 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         fields = '__all__'
         model = Comment
-

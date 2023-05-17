@@ -6,7 +6,7 @@ class User(AbstractUser):
     ADMIN = 'admin'
     MODERATOR = 'moderator'
     USER = 'user'
-    email = models.EmailField('email address')
+    email = models.EmailField('email')
     bio = models.TextField(
         'Биография',
         blank=True
@@ -15,11 +15,12 @@ class User(AbstractUser):
     role = models.TextField(
         blank=True,
         verbose_name='Роль',
-        default='user'
+        default='user',
+        choices=(ADMIN, MODERATOR, USER)
     )
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        ordering = ('id',)
+        # ordering = ('id',)
 

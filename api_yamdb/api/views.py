@@ -1,11 +1,9 @@
-from http import HTTPStatus
-
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, status
 from rest_framework import viewsets, filters
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -16,7 +14,7 @@ from reviews.filter import TitleFilter
 from reviews.models import Category, Genre, Title
 from reviews.models import Review, Comment
 from users.models import User
-from users.permissions import IsAdminOrReadOnly, IsModeratorOrReadOnly, IsUserOrReadOnly, IsAdmin
+from users.permissions import IsAdminOrReadOnly, IsAdmin
 from .serializers import (CategorySerializer,
                           GenreSerializer,
                           TitlesGetSerializer,
@@ -48,12 +46,13 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'PUT':
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
         else:
-            return super().update(request, *args, **kwargs)
+            if request.user.role in ('admin', 'moderator', 'user'):
+                return super().update(request, *args, **kwargs)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['GET', 'PATCH'], detail=False,
             permission_classes=[IsAuthenticated])
     def me(self, request):
-        print(self.request.user.role)
         user = self.request.user
         serializer = self.get_serializer(user)
         if self.request.method == 'PATCH':
@@ -111,23 +110,29 @@ class UserCreateViewSet(mixins.CreateModelMixin,
 
     queryset = User.objects.all()
     serializer_class = UserCreateSerializer
+
     permission_classes = (AllowAny,)
 
     def create(self, request, *args, **kwargs):
-        """Создает объект класса User и
-        отправляет на почту пользователя код подтверждения."""
-        serializer = UserCreateSerializer(data=request.data)
+        username = request.data.get('username')
+        email = request.data.get('email')
+
+        if User.objects.filter(username=username, email=email).exists():
+            user = User.objects.get(username=username, email=email)
+            serializer = self.get_serializer(user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        username = serializer.validated_data.get('username')
-        email = serializer.validated_data.get('email')
-        user, _ = User.objects.get_or_create(username=username, email=email)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        user = User.objects.get(username=username, email=email)
         confirmation_code = default_token_generator.make_token(user)
         send_confirmation_code(
             email=user.email,
             confirmation_code=confirmation_code
         )
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
+        return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
 
 
 class UserReceiveTokenViewSet(mixins.CreateModelMixin,
@@ -153,10 +158,10 @@ class UserReceiveTokenViewSet(mixins.CreateModelMixin,
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    #permission_classes = [IsModeratorOrReadOnly]
+    # permission_classes = [IsModeratorOrReadOnly]
 
 
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    #permission_classes = [IsModeratorOrReadOnly]
+    # permission_classes = [IsModeratorOrReadOnly]
