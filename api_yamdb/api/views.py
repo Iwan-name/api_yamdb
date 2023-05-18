@@ -1,5 +1,6 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
+from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, status
 from rest_framework import viewsets, filters
@@ -9,7 +10,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
-from api.serializers import UserSerializer, UserCreateSerializer, UserRecieveTokenSerializer
+from api.serializers import (UserSerializer,
+                             UserCreateSerializer,
+                             UserRecieveTokenSerializer
+                             )
 from reviews.filter import TitleFilter
 from reviews.models import Category, Genre, Title
 from reviews.models import Review, Comment
@@ -56,7 +60,10 @@ class UserViewSet(viewsets.ModelViewSet):
         user = self.request.user
         serializer = self.get_serializer(user)
         if self.request.method == 'PATCH':
-            serializer = self.get_serializer(user, data=request.data, partial=True)
+            serializer = self.get_serializer(user,
+                                             data=request.data,
+                                             partial=True
+                                             )
             serializer.is_valid(raise_exception=True)
             serializer.save(role=user.role)
             print(serializer.data)
@@ -91,8 +98,8 @@ class GenreViewSet(mixins.CreateModelMixin,
 
 class TitleViewSet(viewsets.ModelViewSet):
     """Вьюсет для модели Title."""
-    queryset = Title.objects.all().order_by('name')
-    serializer_class = TitleFilter
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')).order_by('name')
     pagination_class = PageNumberPagination
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = (DjangoFilterBackend,)
