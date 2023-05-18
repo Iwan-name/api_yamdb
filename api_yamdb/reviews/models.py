@@ -48,10 +48,6 @@ class Title(models.Model):
         'Год выпуска',
         validators=[MaxValueValidator(timezone.now().year)]
     )
-    rating = models.IntegerField(
-        null=True,
-        default=None,
-    )
     description = models.TextField('Описание')
     genre = models.ManyToManyField(
         Genre,

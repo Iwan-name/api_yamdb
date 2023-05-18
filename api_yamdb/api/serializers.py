@@ -26,15 +26,7 @@ class TitlesGetSerializer(serializers.ModelSerializer):
     rating = serializers.IntegerField(read_only=True)
 
     class Meta:
-        fields = (
-            'id',
-            'name',
-            'year',
-            'rating',
-            'description',
-            'category',
-            'genre',
-        )
+        fields = '__all__'
         model = Title
 
 
@@ -51,15 +43,7 @@ class TitlesPostSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = (
-            'id',
-            'name',
-            'year',
-            'rating',
-            'description',
-            'category',
-            'genre',
-        )
+        fields = '__all__'
         model = Title
 
 
