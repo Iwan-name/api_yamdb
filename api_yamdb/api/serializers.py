@@ -17,7 +17,6 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitlesGetSerializer(serializers.ModelSerializer):
-    """Сериализатор для GET-запросов к произведениям."""
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(
         read_only=True,
@@ -26,20 +25,11 @@ class TitlesGetSerializer(serializers.ModelSerializer):
     rating = serializers.IntegerField(read_only=True)
 
     class Meta:
-        fields = (
-            'id',
-            'name',
-            'year',
-            'rating',
-            'description',
-            'category',
-            'genre',
-        )
+        fields = '__all__'
         model = Title
 
 
 class TitlesPostSerializer(serializers.ModelSerializer):
-    """Сериализатор для POST-запросов к произведениям."""
     category = serializers.SlugRelatedField(
         queryset=Category.objects.all(),
         slug_field='slug'
@@ -51,15 +41,7 @@ class TitlesPostSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = (
-            'id',
-            'name',
-            'year',
-            'rating',
-            'description',
-            'category',
-            'genre',
-        )
+        fields = '__all__'
         model = Title
 
 
@@ -75,15 +57,18 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'bio', 'role']
+        fields = ['username',
+                  'first_name',
+                  'last_name',
+                  'email',
+                  'bio',
+                  'role']
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
-    """Сериализатор для создания объекта класса User."""
 
     def validate(self, data):
-        """Запрещает пользователям присваивать себе имя me
-        и использовать повторные username и email."""
+
         username = data['username']
         email = data['email']
         if username == 'me':
@@ -108,8 +93,6 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
 
 class UserRecieveTokenSerializer(serializers.Serializer):
-    """Сериализатор для объекта класса User при получении токена JWT."""
-
     username = serializers.RegexField(
         regex=r'^[\w.@+-]+$',
         max_length=150,
@@ -122,17 +105,47 @@ class UserRecieveTokenSerializer(serializers.Serializer):
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    title = serializers.SlugRelatedField(
+        slug_field='name',
+        read_only=True
+    )
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True
     )
 
+    def score_validate(self, value):
+        if value < 0 or value > 10:
+            raise serializers.ValidationError('Оценка по 10-бальной шкале!')
+        return value
+
+    def validate(self, data):
+        if self.context['request'].method == 'POST':
+            user = self.context['request'].user
+            title_id = self.context['view'].kwargs['title_id']
+            if Review.objects.filter(author=user, title_id=title_id).exists():
+                raise serializers.ValidationError(
+                    'Может существовать только один отзыв!'
+                )
+        return data
+
     class Meta:
-        fields = '__all__'
+        fields = (
+            'id',
+            'text',
+            'author',
+            'score',
+            'pub_date',
+            'title'
+        )
         model = Review
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    review = serializers.SlugRelatedField(
+        slug_field='text',
+        read_only=True
+    )
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True

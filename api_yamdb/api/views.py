@@ -1,20 +1,25 @@
 from django.contrib.auth.tokens import default_token_generator
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, status
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
-from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
-from api.serializers import UserSerializer, UserCreateSerializer, UserRecieveTokenSerializer
+from api.serializers import (UserSerializer,
+                             UserCreateSerializer,
+                             UserRecieveTokenSerializer
+                             )
 from reviews.filter import TitleFilter
 from reviews.models import Category, Genre, Title
-from reviews.models import Review, Comment
+from reviews.models import Review
 from users.models import User
-from users.permissions import IsAdminOrReadOnly, IsAdmin
+from users.permissions import (IsAdminOrReadOnly,
+                               IsAdmin,
+                               IsAuthorOrModerOrAdmin)
 from .serializers import (CategorySerializer,
                           GenreSerializer,
                           TitlesGetSerializer,
@@ -27,9 +32,8 @@ from .utils import send_confirmation_code
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('id')
     serializer_class = UserSerializer
-    pagination_class = PageNumberPagination
     permission_classes = [IsAdmin]
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
@@ -56,7 +60,10 @@ class UserViewSet(viewsets.ModelViewSet):
         user = self.request.user
         serializer = self.get_serializer(user)
         if self.request.method == 'PATCH':
-            serializer = self.get_serializer(user, data=request.data, partial=True)
+            serializer = self.get_serializer(user,
+                                             data=request.data,
+                                             partial=True
+                                             )
             serializer.is_valid(raise_exception=True)
             serializer.save(role=user.role)
             print(serializer.data)
@@ -69,7 +76,6 @@ class CategoryViewSet(mixins.CreateModelMixin,
                       viewsets.GenericViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    pagination_class = PageNumberPagination
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
@@ -84,33 +90,27 @@ class GenreViewSet(mixins.CreateModelMixin,
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
     permission_classes = [IsAdminOrReadOnly]
-    pagination_class = PageNumberPagination
     search_fields = ('name',)
     lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    """Вьюсет для модели Title."""
-    queryset = Title.objects.all().order_by('name')
-    serializer_class = TitleFilter
-    pagination_class = PageNumberPagination
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')).order_by('name')
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
-        if self.request.method == 'GET':
+        if self.action in ('list', 'retrieve'):
             return TitlesGetSerializer
         return TitlesPostSerializer
 
 
 class UserCreateViewSet(mixins.CreateModelMixin,
                         viewsets.GenericViewSet):
-    """Вьюсет для создания обьектов класса User."""
-
     queryset = User.objects.all()
     serializer_class = UserCreateSerializer
-
     permission_classes = (AllowAny,)
 
     def create(self, request, *args, **kwargs):
@@ -132,7 +132,9 @@ class UserCreateViewSet(mixins.CreateModelMixin,
             email=user.email,
             confirmation_code=confirmation_code
         )
-        return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+        return Response(serializer.data,
+                        status=status.HTTP_200_OK,
+                        headers=headers)
 
 
 class UserReceiveTokenViewSet(mixins.CreateModelMixin,
@@ -156,12 +158,34 @@ class UserReceiveTokenViewSet(mixins.CreateModelMixin,
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    queryset = Review.objects.all()
     serializer_class = ReviewSerializer
-    # permission_classes = [IsModeratorOrReadOnly]
+    permission_classes = [IsAuthorOrModerOrAdmin]
+
+    def get_queryset(self):
+        title = get_object_or_404(
+            Title,
+            id=self.kwargs.get('title_id'))
+        return title.reviews.all().order_by('id')
+
+    def perform_create(self, serializer):
+        title = get_object_or_404(
+            Title,
+            id=self.kwargs.get('title_id'))
+        serializer.save(author=self.request.user, title=title)
 
 
 class CommentViewSet(viewsets.ModelViewSet):
-    queryset = Comment.objects.all()
     serializer_class = CommentSerializer
-    # permission_classes = [IsModeratorOrReadOnly]
+    permission_classes = [IsAuthorOrModerOrAdmin]
+
+    def get_queryset(self):
+        review = get_object_or_404(
+            Review,
+            id=self.kwargs.get('review_id'))
+        return review.comments.all()
+
+    def perform_create(self, serializer):
+        review = get_object_or_404(
+            Review,
+            id=self.kwargs.get('review_id'))
+        serializer.save(author=self.request.user, review=review)

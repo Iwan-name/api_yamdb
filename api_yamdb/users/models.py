@@ -16,11 +16,11 @@ class User(AbstractUser):
         blank=True,
         verbose_name='Роль',
         default='user',
-        choices=(ADMIN, MODERATOR, USER)
+        choices=((USER, 'user'),
+                 (MODERATOR, 'moderator'),
+                 (ADMIN, 'admin'),)
     )
 
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
-        # ordering = ('id',)
-

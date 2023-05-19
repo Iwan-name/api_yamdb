@@ -28,7 +28,3 @@ class TitleAdmin(admin.ModelAdmin):
     search_fields = ('name', 'year', 'category', 'genre')
     list_filter = ('name', 'year', 'category', 'genre')
     empty_value_display = '-пусто-'
-
-
-# admin.site.register(Category, CategoryAdmin)
-# Register your models here.
