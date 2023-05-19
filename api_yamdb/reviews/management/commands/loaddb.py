@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from reviews.models import Category, Comment, Genre, Review, Title
+from users.models import User
 
 FIELED_DATA = {
     User: 'users.csv',
@@ -18,6 +19,7 @@ FIELED_DATA = {
 
 class Command(BaseCommand):
     """"Импорт файлов CSV в БД командой python manage.py loaddb"""
+
     def handle(self, *args, **kwargs):
         try:
             for model, csv_file in FIELED_DATA.items():
