@@ -46,14 +46,13 @@ class TitlesPostSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    def validate(self, data):
-        if 'email' in data:
-            email = data['email']
-            if User.objects.filter(email=email).exists():
-                raise serializers.ValidationError(
-                    'Пользователь с таким email уже существует'
-                )
-        return data
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                'Пользователь с таким email уже существует'
+            )
+        return value
 
     class Meta:
         model = User
@@ -67,23 +66,19 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserCreateSerializer(serializers.ModelSerializer):
 
-    def validate(self, data):
-
-        username = data['username']
-        email = data['email']
-        if username == 'me':
-            raise serializers.ValidationError(
-                'Использовать имя me запрещено'
-            )
-        if User.objects.filter(username=username, email=email).exists():
-            return data
-        if User.objects.filter(username=username).exists():
-            return 'Пользователь с таким username уже существует'
-        if User.objects.filter(email=email).exists():
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
             raise serializers.ValidationError(
                 'Пользователь с таким email уже существует'
             )
-        return data
+        return value
+
+    def validate_username(self, value):
+        if value == 'me':
+            raise serializers.ValidationError(
+                'Имя пользователя не может быть "me"'
+            )
+        return value
 
     class Meta:
         model = User

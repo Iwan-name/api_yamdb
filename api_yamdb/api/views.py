@@ -5,6 +5,8 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import mixins, status
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
+from rest_framework.filters import SearchFilter
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
@@ -31,28 +33,27 @@ from .serializers import (
 from .utils import send_confirmation_code
 
 
+class CreateListDestroyGenericViewSet(mixins.CreateModelMixin,
+                                      mixins.ListModelMixin,
+                                      mixins.DestroyModelMixin,
+                                      viewsets.GenericViewSet):
+    pass
+
+
 class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all().order_by('id')
+    queryset = User.objects.all()
+    pagination_class = LimitOffsetPagination
     serializer_class = UserSerializer
     permission_classes = [IsAdmin]
-    filter_backends = (filters.SearchFilter,)
+    filter_backends = (SearchFilter,)
     search_fields = ('username',)
     lookup_field = 'username'
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        search_query = self.request.query_params.get('username', None)
-        if search_query:
-            queryset = queryset.filter(name__icontains=search_query)
-        return queryset
 
     def update(self, request, *args, **kwargs):
         if request.method == 'PUT':
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
         else:
-            if request.user.role in ('admin', 'moderator', 'user'):
-                return super().update(request, *args, **kwargs)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return super().update(request, *args, **kwargs)
 
     @action(methods=['GET', 'PATCH'], detail=False,
             permission_classes=[IsAuthenticated])
@@ -66,14 +67,10 @@ class UserViewSet(viewsets.ModelViewSet):
                                              )
             serializer.is_valid(raise_exception=True)
             serializer.save(role=user.role)
-            print(serializer.data)
         return Response(serializer.data)
 
 
-class CategoryViewSet(mixins.CreateModelMixin,
-                      mixins.ListModelMixin,
-                      mixins.DestroyModelMixin,
-                      viewsets.GenericViewSet):
+class CategoryViewSet(CreateListDestroyGenericViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [IsAdminOrReadOnly]
@@ -82,10 +79,7 @@ class CategoryViewSet(mixins.CreateModelMixin,
     lookup_field = 'slug'
 
 
-class GenreViewSet(mixins.CreateModelMixin,
-                   mixins.ListModelMixin,
-                   mixins.DestroyModelMixin,
-                   viewsets.GenericViewSet):
+class GenreViewSet(CreateListDestroyGenericViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
@@ -96,8 +90,9 @@ class GenreViewSet(mixins.CreateModelMixin,
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.annotate(
-        rating=Avg('reviews__score')).order_by('name')
+        rating=Avg('reviews__score'))
     permission_classes = [IsAdminOrReadOnly]
+    pagination_class = LimitOffsetPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 
@@ -114,19 +109,15 @@ class UserCreateViewSet(mixins.CreateModelMixin,
     permission_classes = (AllowAny,)
 
     def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
         username = request.data.get('username')
         email = request.data.get('email')
-
-        if User.objects.filter(username=username, email=email).exists():
-            user = User.objects.get(username=username, email=email)
-            serializer = self.get_serializer(user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        serializer = self.get_serializer(data=request.data)
+        if User.objects.filter(username=username, email=email):
+            return Response(status=status.HTTP_200_OK)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        user = User.objects.get(username=username, email=email)
+        user = serializer.instance
         confirmation_code = default_token_generator.make_token(user)
         send_confirmation_code(
             email=user.email,
