@@ -8,6 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.pagination import PageNumberPagination
 
 from api.serializers import (UserSerializer,
                              UserCreateSerializer,
@@ -39,13 +40,6 @@ class UserViewSet(viewsets.ModelViewSet):
     search_fields = ('username',)
     lookup_field = 'username'
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        search_query = self.request.query_params.get('username', None)
-        if search_query:
-            queryset = queryset.filter(name__icontains=search_query)
-        return queryset
-
     def update(self, request, *args, **kwargs):
         if request.method == 'PUT':
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -66,15 +60,20 @@ class UserViewSet(viewsets.ModelViewSet):
                                              )
             serializer.is_valid(raise_exception=True)
             serializer.save(role=user.role)
-            print(serializer.data)
         return Response(serializer.data)
 
 
-class CategoryViewSet(mixins.CreateModelMixin,
-                      mixins.ListModelMixin,
-                      mixins.DestroyModelMixin,
-                      viewsets.GenericViewSet):
+class CreateListDestroyViewSet(mixins.CreateModelMixin,
+                               mixins.ListModelMixin,
+                               mixins.DestroyModelMixin,
+                               viewsets.GenericViewSet):
+    """Абстрактный класс для CategoryViewSet и GenreViewSet."""
+    pass
+
+
+class CategoryViewSet(CreateListDestroyViewSet):
     queryset = Category.objects.all()
+    pagination_class = PageNumberPagination
     serializer_class = CategorySerializer
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = (filters.SearchFilter,)
@@ -82,11 +81,9 @@ class CategoryViewSet(mixins.CreateModelMixin,
     lookup_field = 'slug'
 
 
-class GenreViewSet(mixins.CreateModelMixin,
-                   mixins.ListModelMixin,
-                   mixins.DestroyModelMixin,
-                   viewsets.GenericViewSet):
+class GenreViewSet(CreateListDestroyViewSet):
     queryset = Genre.objects.all()
+    pagination_class = PageNumberPagination
     serializer_class = GenreSerializer
     filter_backends = (filters.SearchFilter,)
     permission_classes = [IsAdminOrReadOnly]
@@ -96,7 +93,9 @@ class GenreViewSet(mixins.CreateModelMixin,
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.annotate(
-        rating=Avg('reviews__score')).order_by('name')
+        rating=Avg('reviews__score'))
+    ordering = ('name')
+    pagination_class = PageNumberPagination
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
@@ -159,6 +158,7 @@ class UserReceiveTokenViewSet(mixins.CreateModelMixin,
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
+    pagination_class = PageNumberPagination
     permission_classes = [IsAuthorOrModerOrAdmin]
 
     def get_queryset(self):
@@ -176,6 +176,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
+    pagination_class = PageNumberPagination
     permission_classes = [IsAuthorOrModerOrAdmin]
 
     def get_queryset(self):
