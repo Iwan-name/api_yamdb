@@ -1,7 +1,7 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.utils import timezone
 
+from reviews.validators import validate_year
 from users.models import User
 
 
@@ -43,12 +43,11 @@ class Title(models.Model):
     name = models.CharField('Наименование', max_length=200)
     year = models.PositiveSmallIntegerField(
         'Год выпуска',
-        validators=[MaxValueValidator(timezone.now().year)]
+        validators=(validate_year,)
     )
     description = models.TextField('Описание')
     genre = models.ManyToManyField(
         Genre,
-        # through='Genre_title',
         verbose_name='Жанр'
     )
     category = models.ForeignKey(
@@ -84,8 +83,14 @@ class Review(models.Model):
     score = models.PositiveIntegerField(
         'Оценка',
         validators=(
-            MinValueValidator(1),
-            MaxValueValidator(10),
+            MinValueValidator(
+                1,
+                'Значение выходит за границы минимальные границы'
+            ),
+            MaxValueValidator(
+                10,
+                'Значение выходит за границы максимальные границы'
+            ),
         ),
         error_messages={
             'validators': '10-балльная шкала оценки'
