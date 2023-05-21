@@ -24,7 +24,8 @@ from users.permissions import (IsAdminOrReadOnly,
 from .serializers import (CategorySerializer,
                           GenreSerializer,
                           TitlesGetSerializer,
-                          TitlesPostSerializer)
+                          TitlesPostSerializer,
+                          UpdateUserSerializer)
 from .serializers import (
     ReviewSerializer,
     CommentSerializer
@@ -39,17 +40,18 @@ class UserViewSet(viewsets.ModelViewSet):
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)
     lookup_field = 'username'
+    http_method_names = ['get', 'post', 'patch', 'delete']
 
-    def update(self, request, *args, **kwargs):
-        if request.method == 'PUT':
-            return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        else:
-            if request.user.role in ('admin', 'moderator', 'user'):
-                return super().update(request, *args, **kwargs)
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-
-    @action(methods=['GET', 'PATCH'], detail=False,
-            permission_classes=[IsAuthenticated])
+    @action(
+        methods=[
+            'get',
+            'patch',
+        ],
+        detail=False,
+        url_path='me',
+        permission_classes=[IsAuthenticated],
+        serializer_class=UpdateUserSerializer,
+    )
     def me(self, request):
         user = self.request.user
         serializer = self.get_serializer(user)

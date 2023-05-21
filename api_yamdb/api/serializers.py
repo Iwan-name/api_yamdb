@@ -104,6 +104,11 @@ class UserRecieveTokenSerializer(serializers.Serializer):
     )
 
 
+class UpdateUserSerializer(UserSerializer):
+    class Meta(UserSerializer.Meta):
+        read_only_fields = ('role',)
+
+
 class ReviewSerializer(serializers.ModelSerializer):
     title = serializers.SlugRelatedField(
         slug_field='name',
