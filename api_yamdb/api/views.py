@@ -112,7 +112,7 @@ class UserCreateViewSet(mixins.CreateModelMixin,
         serializer = self.get_serializer(data=request.data)
         username = request.data.get('username')
         email = request.data.get('email')
-        if User.objects.filter(username=username, email=email):
+        if User.objects.filter(username=username, email=email).exists():
             return Response(status=status.HTTP_200_OK)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
