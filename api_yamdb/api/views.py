@@ -52,8 +52,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         if request.method == 'PUT':
             return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
-        else:
-            return super().update(request, *args, **kwargs)
+        return super().update(request, *args, **kwargs)
 
     @action(methods=['GET', 'PATCH'], detail=False,
             permission_classes=[IsAuthenticated])
@@ -112,7 +111,7 @@ class UserCreateViewSet(mixins.CreateModelMixin,
         serializer = self.get_serializer(data=request.data)
         username = request.data.get('username')
         email = request.data.get('email')
-        if User.objects.filter(username=username, email=email):
+        if User.objects.filter(username=username, email=email).exists():
             return Response(status=status.HTTP_200_OK)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
